@@ -4,19 +4,29 @@ from django.shortcuts import render
 from django.template.defaulttags import csrf_token
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, permissions
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 
 from notes.models import Note
 from notes.serializer import NoteSerializer
 class NoteList(generics.ListCreateAPIView):
-    queryset = Note.objects.all()
+
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    #получить заметки по user id
+    def get_queryset(self):
+        return Note.objects.filter(owner=self.request.user)
 
+    #создать заметку и присвоить владельцу
+    def perform_create(self, serializer):
+        return serializer.save(owner=self.request.user)
 class NoteDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Note.objects.all()
     serializer_class = NoteSerializer
+    def get_queryset(self):
+        return Note.objects.filter(owner=self.request.user)
+
 
 
 # class NoteList(APIView):
